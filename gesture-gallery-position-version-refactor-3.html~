@@ -1,0 +1,19 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+<head>
+	
+	<style type="text/css">
+		body{background-color:#303030;color:#727272;}
+		.wrapper {padding:20px;margin-left:auto;margin-right:auto;width:90%;border:1px solid blue;background-color:#111;color:#777;}
+		.viewport{position:relative;background-color:#000;cursor:pointer;overflow:auto;height:600px;}
+		.content{height:100%;position:absolute; left:1px; top:1px;background-color:#DDD;width:100%;}
+		.content img{float:left;display:block;height:20%;background-color:#000;border:2px solid #333;padding:4px;}
+		
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+	    <h1>Hey Chris, I moved this page... click <a href="/gallery-development/gallery-E.4.html">here</a></h1>
+	</div>
+</body>
+</html>

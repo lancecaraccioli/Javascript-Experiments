@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+<head>
+    <script type="text/javascript" src="/gallery-development/js/jquery-1.3.2.min.js"></script>
+	<script type="text/javascript" src="/development-bundle/ui/jquery-ui-1.7.1.custom.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC/Component.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC/Bulletin.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC/Bulletin_Board.js"></script>
+
+	
+	<script type="text/javascript">
+	    var viewport = null;
+	    var content = null;
+        var bulletinGroup;
+        var bulletinBoard;
+        function resetLayout(){
+            content.find('.bulletin').css({ float:'left', height:'100px', width:'auto',position:'static','z-index':1});
+            content.find('.bulletin:last').after('<br style="clear:both;" />');
+            content.css({height:'auto', width:'auto',position:'static'});
+            content.height(content.height());
+            content.width(content.width());
+            //Calculate the percentage height of the images compared to the content div and set the images height equal to that in percentage
+            content.find('.bulletin').each(function(){
+                $(this).css({
+                    height: ($(this).height()/content.height() * 100) +'%',
+                    width: ($(this).width()/content.width() * 100) +'%'
+                });
+            });
+            //Fix all the images at absolute coordinates inside the content div (this prevents images bouncing around in between animation steps)
+			content.find('.bulletin').each(function(){
+			    positionLeft = ($(this).offset().left-content.offset().left)/content.width()*100;
+			    positionTop = ($(this).offset().top-content.offset().top)/content.height()*100;
+			    $(this).data('calculatedPositioning',{
+			        position:'absolute',
+			        left:positionLeft+'%',
+			        top:positionTop+'%'			        			        
+			    });
+			});
+			content.find('.bulletin').each(function(){
+			    applicableCss = $(this).data('calculatedPositioning');
+			    $(this).css(applicableCss);
+			});
+			content.css({
+			    position:'absolute'
+			});
+            //    E.  Resize the content div to fit within the viewport 
+            bulletinBoard.trigger('contextmenu');
+        }
+	    function dump(info, clear){
+	        html = clear?'<pre>'+info+'</pre>':$('.debug-pane').html() + '<br/>' + '<pre>'+info+'</pre>';
+	        $('.debug-pane').html(html);
+	    }
+	    $(document).ready(function(){
+		    viewport = $('.viewport');
+		    content = $('.content');
+    	    bulletinGroup = new LC.Bulletin(content.find('.bulletin'));         
+    	    bulletinBoard = new LC.Bulletin_Board(content);
+    	    bulletinBoard.addBulletins(bulletinGroup);
+            $('.edit-controls .edit').toggle(
+                function(){
+                    bulletinGroup.setDesignModeEnabled(true);
+                    $(this).text('Design Mode - Enabled');
+                },
+                function(){
+                    bulletinGroup.setDesignModeEnabled(false);
+                    $(this).text('Design Mode - Disabled');                
+                }
+            );
+            $('.edit-controls .reset-layout').click(function(){
+                
+                if (confirm('This will remove all custom positioning of images.  Click "Ok" if you are sure you want to do this.')){
+                    resetLayout();
+                }
+            });
+	    });
+		$(window).load(function(){
+			//EVENT HANDLERS
+			viewport.one('click',function(event){
+			    console.debug(event);
+			    $('html').animate({scrollTop:viewport.offset().top},1500);
+			});
+			$('.gallery-navigation').hover(function(){
+			    $(this).addClass('hover');
+			},function(){
+			    $(this).removeClass('hover');
+			});
+			
+			$('.gallery-navigation button.next').click(function(){
+			    bulletinGroup.nextBulletin().click();
+			});
+			$('.gallery-navigation button.previous').click(function(){
+			    bulletinGroup.prevBulletin().click();
+			});
+			$('.gallery-navigation button.thumbnails').click(function(){bulletinBoard.stop();bulletinBoard.trigger('contextmenu');});
+			$(window).resize(function(){bulletinBoard.stop();bulletinBoard.trigger('contextmenu');});
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Setup the initial layout
+            //1.  Set the viewport dimensions to overflow:hidden, height = window.height()
+            viewport.css({
+                height:$(window).height(),
+                overflow:'hidden'
+            });
+            //TODO... server side script will place images in percentage absolute position
+            
+
+            
+            //    E.  Resize the content div to fit within the viewport 
+            bulletinBoard.trigger('contextmenu');
+		});
+	</script>
+    <link type="text/css" href="../development-bundle/themes/base/ui.all.css" rel="stylesheet" />
+	<style type="text/css">
+        a{color:#0055DD;}
+		body{background-color:#303030;color:#727272;}
+		.wrapper {padding:20px;margin-left:auto;margin-right:auto;width:90%;border:1px solid #0055DD;background-color:#111;color:#777;}
+		.viewport{position:relative;background-color:#000;cursor:pointer;overflow:auto;}
+		.content{background-color:#5D5D5D;position:absolute;}
+		.content .bulletin{z-index:2;background-color:#000;padding:9px;margin:2px;border:2px solid #AAA;}
+        .content img{height:100%;padding:1%;}
+        .gallery-navigation{display:block;position:absolute;bottom:0px;opacity:.5;left:0px;z-index:999999;}
+		.gallery-navigation.enabled{display:block;}
+		.gallery-navigation.hover{opacity:1;}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+	    <h1>LC Sandbox</h1>
+		<h2>Zoomable PhotoGallery Interface</h2>
+		<h3>Welcome</h3>
+		<p>Welcome to the sandbox.  This is where I develop new concepts and applications of those concepts.</p>
+		<h3>Demo</h3>
+		<p>This version underwent serious refactoring, which made it possible to add more advanced features.</p>
+		<h4>Features In normal Mode</h4>
+    	<ol>
+    	    <li>Left click an image to zoom in on it.</li>
+    	    <li>Right click to return to thumbnail view.</li>
+        </ol>
+		<p>Click the "Design Mode" button to enable "Design Mode".  In design mode you have the ability to place and resize the images.</p>
+		<h4>Features In Design Mode</h4>
+    	<ol>
+    	    <li>Drag images to desired location.</li>
+    	    <li>Resize image.  This works similar to resizing a window.  Hover your mouse pointer over the right bottom corner of an image.  Click and drag that corner to resize.</li>
+    	</ol>
+    	    
+    	<div class="edit-controls">
+    	    <button class="edit">Design Mode - <span class="current-mode">Disabled</span></button>
+    	    <button class="reset-layout">Reset Layout</button> 	    
+    	</div>
+		<div id="viewport" class="viewport">        	
+        	<div class="content" style="overflow: hidden; position: absolute; height: 497.473px; width: 1064px; display: block; left: 1px; top: 1px;">
+        	    <div class="bulletin" style="height: 20.7972%; width: 12.1971%; position: absolute; left: 38.349%; top: 0.533201%; z-index: 4;"><img src="/gallery-development/images/ally3.jpg"/></div>
+        	    <div class="bulletin" style="height: 15.0905%; width: 8.55263%; position: absolute; left: 43.891%; top: 38.0651%; z-index: 21;"><img src="/gallery-development/images/ally.jpg"/></div>
+        	    <div class="bulletin" style="height: 56.1437%; width: 18.5349%; position: absolute; left: 64.2777%; top: 14.9338%;"><img src="/gallery-development/images/IMG_4716.jpg"/></div>
+        	    <div class="bulletin" style="height: 20.7972%; width: 14.5396%; position: absolute; left: 47.6676%; top: 15.8786%; z-index: 5;"><img src="/gallery-development/images/IMG_4727.jpg"/></div>
+        	    <div class="bulletin" style="height: 18.7123%; width: 5.92105%; position: absolute; left: 91.0699%; top: 25.9457%; z-index: 18;"><img src="/gallery-development/images/jenny2.jpg"/></div>
+        	    <div class="bulletin" style="height: 16.2978%; width: 11.5602%; position: absolute; left: 84.8669%; top: 54.0979%; z-index: 9;"><img src="/gallery-development/images/jenny3.jpg"/></div>
+        	    <div class="bulletin" style="height: 12.1277%; width: 8.73883%; position: absolute; left: 86.2959%; top: 0.425532%;"><img src="/gallery-development/images/jenny7.jpg"/></div>
+        	    <div class="bulletin" style="height: 17.7694%; width: 8.47308%; position: absolute; left: 27.417%; top: 1.5057%; z-index: 12;"><img src="/gallery-development/images/jenny_bricks014.jpg"/></div>
+        	    <div class="bulletin" style="height: 12.0983%; width: 8.29656%; position: absolute; left: 52.7111%; top: -0.378072%;"><img src="/gallery-development/images/new_hair_do033.jpg"/></div>
+        	    <div class="bulletin" style="height: 10.9641%; width: 7.85525%; position: absolute; left: 75.4031%; top: -0.567108%;"><img src="/gallery-development/images/nizate009.jpg"/></div>
+        	    <div class="bulletin" style="height: 13.617%; width: 4.1708%; position: absolute; left: 86.2959%; top: 17.6596%;"><img src="/gallery-development/images/nizate033.jpg"/></div>
+        	    <div class="bulletin" style="height: 13.4043%; width: 10.0298%; position: absolute; left: 83.1986%; top: 36.3246%; z-index: 7;"><img src="/gallery-development/images/nizate.jpg"/></div>
+        	    <div class="bulletin" style="height: 11.1531%; width: 7.59047%; position: absolute; left: 64.2792%; top: -0.189036%;"><img src="/gallery-development/images/sean2.jpg"/></div>
+        	    <div class="bulletin" style="height: 50.8507%; width: 33.9806%; position: absolute; left: 0.261591%; top: 44.9128%; z-index: 15;"><img src="/gallery-development/images/sean4.jpg"/></div>
+        	    <div class="bulletin" style="height: 20.3219%; width: 13.1579%; position: absolute; left: 34.9624%; top: 75.0134%; z-index: 16;"><img src="/gallery-development/images/sean5.jpg"/></div>
+        	    <div class="bulletin" style="height: 37.2233%; width: 10.0564%; position: absolute; left: 32.3308%; top: 24.5473%; z-index: 19;"><img src="/gallery-development/images/sean6.jpg"/></div>
+        	    <div class="bulletin" style="height: 20.7972%; width: 14.5396%; position: absolute; left: 83.1406%; top: 74.414%;"><img src="/gallery-development/images/swapmeet2.jpg"/></div>
+        	    <div class="bulletin" style="height: 20.7972%; width: 14.5396%; position: absolute; left: 52.1256%; top: 41.3447%; z-index: 23;"><img src="/gallery-development/images/swapmeet3.jpg"/></div>
+        	    <div class="bulletin" style="height: 25.5319%; width: 17.7756%; position: absolute; left: 64.2513%; top: 69.8236%;"><img src="/gallery-development/images/workingswapmeet2.jpg"/></div>
+        	    <div class="bulletin" style="height: 30.6383%; width: 14.3992%; position: absolute; left: 47.8649%; top: 66.383%;"><img src="/gallery-development/images/chris.jpg"/></div>
+        	    <div class="bulletin" style="height: 14.3667%; width: 10.3266%; position: absolute; left: 36.1404%; top: 55.8987%; z-index: 22;"><img src="/gallery-development/images/jen.jpg"/></div>
+        	    <div class="bulletin" style="height: 48.0885%; width: 33.2707%; position: absolute; left: 0.750312%; top: -0.402415%; z-index: 11;"><img src="/gallery-development/images/surf_or_die.jpg"/></div>
+       	    </div>
+            <div class="gallery-navigation">
+                <button class="previous">Previous</button>
+                <button class="thumbnails">Thumbnails</button>
+                <button class="next">Next</button>
+            </div>
+        </div>
+        <div class="debug-pane"></div>
+	</div>
+
+</body>
+</html>

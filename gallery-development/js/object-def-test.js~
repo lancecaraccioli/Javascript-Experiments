@@ -1,0 +1,27 @@
+/*!
+ * Object definition testing (alternative to prototype?)
+ *
+ * 
+ */
+var LC_Class
+(function(Class){
+    Class = {
+        //public functions
+        dataAlert:function(data){
+            
+        },
+        dataLog:function(data){
+            
+        }
+    };
+    //private functions
+    function log(data){
+        console.debug(data);
+    }
+    function show(data){
+        alert(data);
+    }
+)(LC_CLASS);
+
+obj1 = new Class();
+obj2 = new Class();

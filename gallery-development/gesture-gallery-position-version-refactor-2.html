@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >s
+<head>
+	<script type="text/javascript" src="/development-bundle/jquery-1.3.2.js"></script>
+	
+	<script type="text/javascript">
+	    function dump(obj) {
+            var out = '';
+            for (var i in obj) {
+                out += i + ": " + obj[i] + "\n";
+            }
+
+            //alert(out);
+
+            // or, if you wanted to avoid alerts...
+
+            $('.debug-pane').html(out);
+        }
+
+	    viewport = null;
+	    content = null;
+	    
+		$(window).load(function(){
+		    viewport = $('.viewport');
+		    content = $('.content');
+			viewport.css({overflow:'hidden'});
+			
+			function rightClickHandler (event){
+			    
+			    var scaleFactorY = viewport.height()/content.height();
+			    var scaleFactorX = viewport.width()/content.width();
+			    var scaleFactor;
+			    if (scaleFactorX > scaleFactorY){
+			        scaleFactor = scaleFactorY;
+			    } else {
+			        scaleFactor = scaleFactorX;
+			    }
+			    
+				var expectedContentWidth = scaleFactor * content.width();
+				var expectedContentHeight = scaleFactor * content.height();
+				//reposition the content to the top left of the viewport
+				var translationAdjustment = {x:1.0, y:1.0};
+				content.data('translation', translationAdjustment);
+				var positionLeftTarget = 1;
+				var positionTopTarget = 1;
+		        content.stop();				
+				content.animate({height:expectedContentHeight, width:expectedContentWidth,left:positionLeftTarget, top:positionTopTarget}, {duration:1500});
+				content.data('scale', {x:scaleFactor, y:scaleFactor});
+			}
+	
+			function leftClickHandler(event){
+			    /*to find the content positioning that centers the selected image in the viewport
+			        1.We need to translate the center on the image to the content element coordinate space
+			            a.  find the center of the image in image coordinates (image width/2)
+			            b.  find distance of center of image from content left border (image offset left + 1/2 image width) - content element offset left
+			            c.  translate that distance to relative content coordinates (distance to center of image)/content width
+			            d.  scroll left of viewport will be width of content * image center relative location - (1/2 width of viewport)
+			            
+			    */ 
+		        var translationAdjustment = {x:0.0, y:0.0};
+		        var img = $(this);
+		        //find the relative center mass x coordinate
+			    var halfOfImageWidth = img.outerWidth()/2.0;//get width of image including padding and border but not margin then divide it by two
+			    var xDistanceFromLeftContentBorderToCenterOfImage = (img.offset().left + halfOfImageWidth) - (content.offset().left);//the offset is between border and margin
+			    translationAdjustment.x = xDistanceFromLeftContentBorderToCenterOfImage/content.width();
+			    //find the relative center mass y coordinate
+			    var halfOfImageHeight = img.outerHeight()/2.0;
+			    var yDistanceFromTopContentBorderToCenterOfImage = (img.offset().top + halfOfImageHeight) - (content.offset().top);//the offset is between border and margin
+			    translationAdjustment.y = yDistanceFromTopContentBorderToCenterOfImage/content.height();
+			
+                content.data('translation', translationAdjustment);
+                
+                //we want the current image centered on the screen and taking as much realestate as possible
+                //the most realestate possible that stays within the viewport will be determined by the viewports deminsions
+                //so we want the images height to be the height of the viewport, so by taking the ratio of the image height now
+                //to it's ideal height (which is the height of the viewport) we can determine the same scale ratio for the content 
+                var scaleFactor = viewport.height()/img.height();
+                var expectedContentWidth = scaleFactor * content.width();
+			    var expectedContentHeight = scaleFactor * content.height();
+			    var positionLeftTarget = viewport.width()/2.0 - (expectedContentWidth * translationAdjustment.x);
+			    var positionTopTarget = viewport.height()/2.0 - (expectedContentHeight * translationAdjustment.y);
+		        content.stop();
+			    content.animate({height:expectedContentHeight, width:expectedContentWidth,left:positionLeftTarget+1, top:positionTopTarget+1}, {duration:1500});
+			    content.data('scale', {x:scaleFactor, y:scaleFactor});
+	        
+			}
+
+			content.find('img').click(function(event){
+			    return leftClickHandler.call(this, event);
+			});
+			content.bind('contextmenu', function(event){
+			    event.preventDefault();
+			    return rightClickHandler.call(content,event);
+			});
+			content.animate({width:viewport.height()*(content.width()/content.height())}, {duration:500});
+			
+		});
+	</script>
+	<style type="text/css">
+		body{background-color:#303030;color:#727272;}
+		.wrapper {padding:20px;margin-left:auto;margin-right:auto;width:90%;border:1px solid blue;background-color:#111;color:#777;}
+		.viewport{position:relative;background-color:#333;cursor:pointer;overflow:auto;height:600px;}
+		.content{position:absolute; left:1px; top:1px;background-color:#333;}
+		.content img{width:100%;background-color:#000;}
+		.content td{vertical-align:top;}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+	    <h1>LC Sandbox</h1>
+		<h2>Zoomable PhotoGallery Interface</h2>
+		<p>This is a sandbox attempt to build a photogallery that zooms away from the user on a right mouse click and once an image is chosen (left click) centers that image and zooms in on it.</p>
+		<h3>Demo</h3>
+		<p>Simply left click the image you would like to view.  Right click to return to thumbnail view.</p>
+		<div class="viewport">        	
+        	<div class="content">
+        	    <table class="gallery-wall" cellspacing="0" cellpadding="0">
+        	        <tr>
+        	            <td>
+                        	    <img src="ally3.jpg"/>
+                        	    <img src="ally.jpg"/>
+                        	    <img src="IMG_4716.jpg"/>
+                        	    <img src="IMG_4727.jpg"/>
+                        	    <img src="jenny2.jpg"/>
+                    	</td>
+                        <td>
+                        	    <img src="jenny3.jpg"/>
+                        	    <img src="jenny7.jpg"/>
+                        	    <img src="jenny_bricks014.jpg"/>
+                        	    <img src="new_hair_do033.jpg"/>
+                        	    <img src="nizate009.jpg"/>
+                    	</td>
+                    	<td>
+                        	    <img src="nizate033.jpg"/>
+                        	    <img src="nizate.jpg"/>
+                        	    <img src="sean2.jpg"/>
+                        	    <img src="sean4.jpg"/>
+                        	    <img src="sean5.jpg"/>
+                        </td>
+                        <td>
+                        	    <img src="sean6.jpg"/>
+                        	    <img src="swapmeet2.jpg"/>
+                        	    <img src="swapmeet3.jpg"/>
+                        	    <img src="workingswapmeet2.jpg"/>
+                        	    <img src="japanise_guys.jpg"/>
+                    	</td>
+                    </tr>
+            	</table>
+        	</div>
+        </div>
+        <div class="debug-pane"></div>
+	</div>
+</body>
+</html>

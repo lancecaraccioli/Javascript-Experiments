@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+<head>
+    <script type="text/javascript" src="/gallery-development/js/jquery-1.3.2.min.js"></script>
+	<script type="text/javascript" src="/development-bundle/ui/jquery-ui-1.7.1.custom.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC/Component.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC/Bulletin.js"></script>
+	<script type="text/javascript" src="/gallery-development/js/LC/lib/LC/Bulletin_Board.js"></script>
+
+	
+	<script type="text/javascript">
+	    var viewport = null;
+	    var content = null;
+        var bulletinGroup;
+        var bulletinBoard;
+
+	    function dump(info, clear){
+	        html = clear?'<pre>'+info+'</pre>':$('.debug-pane').html() + '<br/>' + '<pre>'+info+'</pre>';
+	        $('.debug-pane').html(html);
+	    }
+	    $(document).ready(function(){
+		    viewport = $('.viewport');
+		    content = $('.content');
+    	    bulletinGroup = new LC.Bulletin(content.find('.img'));            
+    	    bulletinBoard = new LC.Bulletin_Board(content);
+    	    bulletinBoard.addBulletins(bulletinGroup);
+            $('.edit-controls .edit').toggle(
+            function(){
+                bulletinGroup.setDesignModeEnabled(true);
+                $(this).text('Design Mode - Enabled');
+            },
+            function(){
+                bulletinGroup.setDesignModeEnabled(false);
+                $(this).text('Design Mode - Disabled');                
+            });
+	    });
+		$(window).load(function(){
+			//EVENT HANDLERS
+			viewport.one('click',function(event){
+			    console.debug(event);
+			    $('html').animate({scrollTop:viewport.offset().top},1500);
+			});
+			$('.gallery-navigation').hover(function(){
+			    $(this).addClass('hover');
+			},function(){
+			    $(this).removeClass('hover');
+			});
+			//hackish refactor to encapsilate and delegate the iteration logic to the objects
+			$('.gallery-navigation button.next').click(function(){
+			    bulletinGroup.nextBulletin().click();
+			});
+			$('.gallery-navigation button.previous').click(function(){
+			    bulletinGroup.prevBulletin().click();
+			});
+			$('.gallery-navigation button.thumbnails').click(function(){bulletinBoard.trigger('contextmenu');});
+			
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Setup the initial layout
+            //1.  Set the viewport dimensions to overflow:hidden, height = window.height()
+            viewport.css({
+                height:$(window).height(),
+                overflow:'hidden'
+            });
+            //2.  normalize the image dimensions (make them all have a common height) then calculate the percentage height they should be to best fit into the viewport
+            //    A.  Set the pixel height of each image to the pixel equivilant of 20% (arbitrary) of the viewport.
+			content.find('.img').height(viewport.height()*0.20);
+			//    A.2 Let the content div wrap around the images it contains (give it normal css layout properties)
+			content.css({
+			    position:"absolute"
+			});
+
+            //    B.  Start a loop that will continually change the image heights until either the upper or lower threshold is crossed (or both thresholds get crossed...more detail here)
+            var threshold = .25
+            var wasBelowTarget = false;
+            var wasAboveTarget = false;
+            var isBelowTarget = false;
+            var isAboveTarget = false;
+            do{
+                viewportArea = viewport.height()*viewport.width();
+                contentArea = content.height()*content.width();
+                isBelowTarget  = (viewportArea/contentArea < 1.0-threshold);
+                wasBelowTarget = isBelowTarget?true:wasBelowTarget;
+                isAboveTarget = (viewportArea/contentArea > 1.0+threshold);
+                wasAboveTarget = isAboveTarget?true:wasAboveTarget;
+                content.find('.img').height(content.find('.img').height()* viewportArea/contentArea);
+            } while((isBelowTarget || isAboveTarget) && !(wasBelowTarget && wasAboveTarget))
+            //    C.1  Fix the dimensions of the content div... this may seem unintitive, but the css is set to height:auto at this point
+            //         so we need to change the dimensions to absolute pixel values
+            content.height(content.height());
+            content.width(content.width());
+            //    C.2  Calculate the percentage height of the images compared to the content div and set the images height equal to that in percentage
+            content.find('.img').each(function(){
+                $(this).css({
+                    height: ($(this).height()/content.height() * 100) +'%',
+                    width: ($(this).width()/content.width() * 100) +'%'
+                });
+            });
+            //    <div class="left-top"></div>D.  Fix all the images at absolute coordinates inside the content div (this prevents images bouncing around in between animation steps)
+			content.find('.img').each(function(){
+			    positionLeft = ($(this).offset().left-content.offset().left)/content.width()*100;
+			    positionTop = ($(this).offset().top-content.offset().top)/content.height()*100;
+			    $(this).data('calculatedPositioning',{
+			        position:'absolute',
+			        left:positionLeft+'%',
+			        top:positionTop+'%'			        			        
+			    });
+			});
+			content.find('.img').each(function(){
+			    applicableCss = $(this).data('calculatedPositioning');
+			    $(this).css(applicableCss);
+			});
+            //    E.  Resize the content div to fit within the viewport 
+            bulletinBoard.trigger('contextmenu');
+		});
+	</script>
+    <link type="text/css" href="../development-bundle/themes/base/ui.all.css" rel="stylesheet" />
+	<style type="text/css">
+        a{color:#0055DD;}
+		body{background-color:#303030;color:#727272;}
+		.wrapper {height:1000px;padding:20px;margin-left:auto;margin-right:auto;width:90%;border:1px solid #0055DD;background-color:#111;color:#777;}
+		.viewport{position:relative;background-color:#000;cursor:pointer;overflow:auto;}
+		.content{background-color:#5D5D5D;text-align:center;overflow:hidden;}
+		.content .img{float:left;height:100px;background-color:#000;padding:9px;margin:2px;border:2px solid #AAA;}
+        .content img{display:inline;height:100%}
+        .gallery-navigation{display:block;position:absolute;bottom:0px;opacity:.5;left:0px;}
+		.gallery-navigation.enabled{display:block;}
+		.gallery-navigation.hover{opacity:1;}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+	    <h1>LC Sandbox</h1>
+		<h2>Zoomable PhotoGallery Interface</h2>
+		<h3>Welcome</h3>
+		<p>Welcome to the sandbox.  This is where I develop new concepts and applications of those concepts.</p>
+		<h3>Demo</h3>
+		<p>This version underwent serious refactoring.  The navigation feature is still buggy since the changes and needs to be cleaned up.</p>
+		<h4>Features In normal Mode</h4>
+    	<ol>
+    	    <li>Left click an image to zoom in on it.</li>
+    	    <li>Right click to return to thumbnail view.</li>
+        </ol>
+		<p>Click the "Design Mode" button to turn enable "Design Mode".  In design mode you have the ability to place the images where you would like them and to resize them.</p>
+		<h4>Features In Design Mode</h4>
+    	<ol>
+    	    <li>Drag images to desired location.</li>
+    	    <li>Resize image.  This works similar to resizing a window.  Hover your mouse pointer over the right bottom corner of an image.  Click and drag that corner to resize.</li>
+    	</ol>
+    	    
+    	<div class="edit-controls">
+    	    <button class="edit">Design Mode - <span class="current-mode">Disabled</span></button>    	    
+    	</div>
+		<div id="viewport" class="viewport">        	
+        	<div class="content">
+        	    <div class = "bulletin img"><img src="/gallery-development/images/ally3.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/ally.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/IMG_4716.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/IMG_4727.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/jenny2.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/jenny3.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/jenny7.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/jenny_bricks014.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/new_hair_do033.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/nizate009.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/nizate033.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/nizate.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/sean2.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/sean4.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/sean5.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/sean6.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/swapmeet2.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/swapmeet3.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/workingswapmeet2.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/chris.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/jen.jpg"/></div>
+        	    <div class = "bulletin img"><img src="/gallery-development/images/surf_or_die.jpg"/></div>
+       	    </div>
+            <div class="gallery-navigation">
+                <button class="previous">Previous</button>
+                <button class="thumbnails">Thumbnails</button>
+                <button class="next">Next</button>
+            </div>
+        </div>
+        <div class="debug-pane"></div>
+	</div>
+
+</body>
+</html>

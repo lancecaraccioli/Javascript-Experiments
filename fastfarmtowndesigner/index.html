@@ -1,0 +1,359 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+<head>
+	<script type="text/javascript" src="/development-bundle/jquery-1.3.2.js"></script>
+	<script type="text/javascript">
+	    $.expr[':'].inColumn = function(obj, index, meta, stack){
+            // obj - is a current DOM element
+            // index - the current loop index in stack
+            // meta - meta data about your selector
+            // stack - stack of all elements to loop
+            if ($(obj).data('column') == parseInt(meta[3])){
+                return true;
+            }
+            return false;
+            // Return true to include current element
+            // Return false to explude current element
+        };
+        $.expr[':'].inRow = function(obj, index, meta, stack){
+            // obj - is a current DOM element
+            // index - the current loop index in stack
+            // meta - meta data about your selector
+            // stack - stack of all elements to loop
+            if ($(obj).data('row') == parseInt(meta[3])){
+                return true;
+            }
+            return false;
+            // Return true to include current element
+            // Return false to explude current element
+        };
+    </script>
+	<script type="text/javascript">
+	    $('body').ajaxError(function(event, XMLHttpRequest, ajaxOptions, thrownError){
+	        console.debug(arguments);
+	    });
+	    function ajaxSuccessCallback(data, textStatus){
+	        //console.debug(data);
+	    };
+  	    function ajaxErrorCallback(XMLHttpRequest, textStatus, errorThrown) {
+	    };
+	    function ajaxCompleteCallback(XMLHttpRequest, textStatus) {
+	    };
+	    var purchaseBaseUrl, purchaseBaseUrl, harvestBaseUrl, bullDozeBaseUrl;
+        var plotWidth = 3;//if you look at the coordinates sent in request they are between 0 and 48... which is why your plots don't line up some times when you do it manually
+	    var plotsX = plotsY = 22;//the farmtown lot meassurment
+        var farmDimensionY = ((plotWidth+1)*plotsX)/plotWidth;//matches dimensions of lot on farmtown
+        var farmDimensionX = ((plotWidth+1)*plotsY)/plotWidth;//matches dimensions of lot on farmtown
+        //http://w53.slashkey.com/facebook/farm/ajax.php?do=delete_item&uid=1182377425&platform=facebook&call_sig=09b7219a474d52dc81a05c7197ea89ea&call_sig_time=1247954493&fb_sig_in_iframe=1&fb_sig_locale=en_US&fb_sig_in_new_facebook=1&fb_sig_time=1247954277.0514&fb_sig_added=1&fb_sig_profile_update_time=1232317216&fb_sig_expires=1247958000&fb_sig_user=1182377425&fb_sig_session_key=2.9vaxmn1ah_2gK_pqJq_LkA__.3600.1247958000-1182377425&fb_sig_ss=tUBoYYltEXsQ43D5GnD5Ew__&fb_sig_ext_perms=auto_publish_recent_activity&fb_sig_api_key=b2b2967f51e927af4b4b8e07e8ba03d4&fb_sig_app_id=56748925791&fb_sig=8cd3a42049e606f3c1d37dadfb667aef&mps=f1
+        //http://w53.slashkey.com/facebook/farm/ajax.php?do=harvest&uid=1182377425&platform=facebook&call_sig=09b7219a474d52dc81a05c7197ea89ea&call_sig_time=1247955319&fb_sig_in_iframe=1&fb_sig_locale=en_US&fb_sig_in_new_facebook=1&fb_sig_time=1247955314.1742&fb_sig_added=1&fb_sig_profile_update_time=1232317216&fb_sig_expires=1247961600&fb_sig_user=1182377425&fb_sig_session_key=2.kf01dBlnv39fIzk_a0VZRw__.3600.1247961600-1182377425&fb_sig_ss=5cImY4G4r955ZRpfgLBLEA__&fb_sig_ext_perms=auto_publish_recent_activity&fb_sig_api_key=b2b2967f51e927af4b4b8e07e8ba03d4&fb_sig_app_id=56748925791&fb_sig=2b04357c21018a1776abf8e13e9eecd7&mps=f1
+        farmTownBaseRequestUrl = "http://w53.slashkey.com/facebook/farm/ajax.php?"
+/*REQUIRED*/+"call_sig=09b7219a474d52dc81a05c7197ea89ea"//same every time only thing apparently required besides information on what to do and user id
+            //+"&platform=facebook"//same every time
+            //+"&call_sig_time=1247531675"//unix time stamp - look for javascript function to create this
+            //+"&fb_sig_in_iframe=1"//same every time
+            //+"&fb_sig_locale=en_US"//same every time
+            //+"&fb_sig_in_new_facebook=1" //same every time
+            //+"&fb_sig_time=1247531668.7979"//unix time stamp plus milliseconds. (probably)
+            //+"&fb_sig_added=1"//same every time
+            //+"&fb_sig_profile_update_time=1232317216"//unix time stamp - probably last time I updated my facebook profile (hasn't changed)
+            //+"&fb_sig_expires=1247536800"//unix time stamp" -- hasn't changed since last session
+            //+"&fb_sig_user=1182377425"//same as user id
+            //+"&fb_sig_session_key=2.ENXPTX8qKW8l4WuxfdHi5Q__.3600.1247536800-1182377425"//how do I get this value without pasting it in?
+            //+"&fb_sig_ss=0q_i55aojfKrQaHmwzkHNw__"//no clue - some type of session variable here... identifying what?  is this required?
+            //+"&fb_sig_ext_perms=auto_publish_recent_activity"//same every time... don't think it's needed?  required?
+            //+"&fb_sig_api_key=b2b2967f51e927af4b4b8e07e8ba03d4"//this is the same every time
+            //+"&fb_sig_app_id=56748925791"//also the same everytime
+            //+"&fb_sig=9a9f71ae2073f3426a4b50bb79344689"//looks unique per request.. .not sure what it is
+            //+"&mps=f1"//same every time
+            ;
+	    getUserInfoBaseUrl = harvestBaseUrl = bullDozeBaseUrl = purchaseBaseUrl = farmTownBaseRequestUrl;
+	    
+	    $(document).ready(function(){
+	        $('button#userInfoButton').click(function(event){
+	            event.preventDefault();
+	            var userID = $('select[name=userID]').val();
+	            uri = getUserInfoBaseUrl;
+	            uri += "&do=get_user_info";
+	            uri += "&uid="+userID;
+	            uri += "&target_uid="+userID;
+	            try{
+	                $.ajax({
+                        complete:ajaxCompleteCallback,
+                        success:ajaxSuccessCallback,
+                        error:ajaxErrorCallback,
+                        data:{uri:uri},
+                        url:'remote-JSON-requestRelay.php',
+                        dataType:'json'
+                    });
+	            }catch(e){}//swallow failure loading user info
+	            return false;
+	        });
+	        $('input[name=select_type]').click(function(event){
+	            //event.preventDefault();
+	            switch(val = $(this).val()){
+	                case 'everything':
+                        $('input.plot').attr('checked', 'checked');
+                        break;
+                    case 'nothing':
+                        $('input.plot').attr('checked', null);
+                        break;
+                    case 'pluses':
+                        $('input.plot').unbind('click');
+                        $('input.plot').click(function(){
+                            $('input.plot:inColumn('+$(this).data('column')+')').attr('checked',$(this).attr('checked'));
+                            $('input.plot:inRow('+$(this).data('row')+')').attr('checked',$(this).attr('checked'));
+                        });
+                        break;
+                    case 'columns':
+                        $('input.plot').unbind('click');
+                        $('input.plot').click(function(){
+                            $('input.plot:inColumn('+$(this).data('column')+')').attr('checked',$(this).attr('checked'));
+                        });
+                        break;
+                    case 'rows':
+                        $('input.plot').unbind('click');
+                        $('input.plot').click(function(){
+                            $('input.plot:inRow('+$(this).data('row')+')').attr('checked',$(this).attr('checked'));
+                        });
+                        break;
+                    case 'singlePlot':
+                        $('input.plot').unbind('click');
+                        break;
+	            }
+	        });
+	        $('input#start_farming').click(function(event){
+	            event.preventDefault();
+	            var url, item, uid, doThis;
+	            switch(val = $('select[name=doThis]').val()){
+	                case 'purchase':
+	                    url = purchaseBaseUrl;
+	                    item = $('select[name=item]').val();
+	                    doThis = 'buy_batch';
+	                    break;
+	                case 'bulldoze':
+	                    url = bullDozeBaseUrl;
+	                    doThis = 'delete_item';
+	                    item = $('select[name=item]').val();
+	                    break;
+	                case 'harvest':
+	                    url = harvestBaseUrl;
+	                    doThis = 'harvest';
+	                    action = 'storage';
+	                    farmUserID=$('select[name=farmUserID]').val();
+	                    item = $('select[name=item]').val();
+	                    break;
+	                /*case 'bulldozeBatch'://doesn't work... good try though
+	                    url = bullDozeBaseUrl;
+	                    doThis = 'delete_batch';
+	                    item = $('select[name=item]').val();
+	                    break;*/
+	                default:
+	                    return false; 
+	            }
+	            offsetX = parseInt($('input[name="offsetX"]').val());
+	            offsetY = parseInt($('input[name="offsetY"]').val());
+	            if (!item){alert('select an item to plant.');return false;}
+	            uid = $('select[name=userID]').val();
+	            url = url + '&uid='+uid+'&do='+doThis;
+                
+                //append items based on selected boxes
+                var plotsToFarm = $('input.plot:checked');
+                if (plotsToFarm.size() < 1){alert('select at least one plot to farm.');return false;}
+                
+	            if (doThis!='delete_item' && doThis!='harvest'){
+	                url = url + "&items=";
+	                plotsToFarm.each(function(i){
+	                    if (i>0){
+	                        url = url + ';';
+	                    }
+                        url = url + item + ','+(offsetX+$(this).data('column')*plotWidth)+','+(offsetY+$(this).data('row')*plotWidth);
+	                });
+    	            
+                    try{
+                        
+                        $.ajax({
+                            complete:ajaxCompleteCallback,
+                            success:ajaxSuccessCallback,
+                            error:ajaxErrorCallback,
+                            data:{uri:url},
+                            url:'remote-JSON-requestRelay.php',
+                            dataType:'json'
+                        });
+                    } catch(e){
+                        console.debug(e);	            
+                    }
+	            } else if (doThis=='delete_item') {
+                    plotsToFarm.each(function(i){
+                        bullDozeUrl = url;
+                        bullDozeUrl = bullDozeUrl + "&ix="+(offsetX+$(this).data('column')*plotWidth);
+                        bullDozeUrl = bullDozeUrl + "&iy="+(offsetY+$(this).data('row')*plotWidth);
+                        bullDozeUrl = bullDozeUrl + "&type="+item;
+                        try{
+                            $.ajax({
+                                complete:ajaxCompleteCallback,
+                                success:ajaxSuccessCallback,
+                                error:ajaxErrorCallback,
+                                data:{uri:bullDozeUrl},
+                                url:'remote-JSON-requestRelay.php',
+                                dataType:'json'
+                            });
+                        } catch(e){
+                            console.debug(e);	            
+                        }
+
+                    });	                
+                    
+	            } else if (doThis=='harvest'){
+                    plotsToFarm.each(function(i){
+                        harvestUrl = url;
+                        harvestUrl = harvestUrl + "&ix="+(offsetX+$(this).data('column')*plotWidth);
+                        harvestUrl = harvestUrl + "&iy="+(offsetY+$(this).data('row')*plotWidth);
+                        harvestUrl = harvestUrl + "&type="+item;
+                        harvestUrl = harvestUrl + "&action="+action;
+                        harvestUrl = harvestUrl + "&farm_uid="+farmUserID;
+                        try{
+                            $.ajax({
+                                complete:ajaxCompleteCallback,
+                                success:ajaxSuccessCallback,
+                                error:ajaxErrorCallback,
+                                data:{uri:harvestUrl},
+                                url:'remote-JSON-requestRelay.php',
+                                dataType:'json'
+                            });
+                        } catch(e){
+                            console.debug(e);	            
+                        }
+
+                    });	                
+	            
+	            }
+	            
+	            //don't let submit button actually submit to server this is all ajax driven
+	            return false;
+	        });
+	    });
+	</script>
+	<style type="text/css">
+        #footer,
+        #body,	
+		#header{border:1px solid black;text-align:center;}
+		#body{padding:2%;}
+		#body div.column{float:left;font-size:10px;}
+		#body div.left.column{width:34%;border:2px dotted gray;}
+		#body div.right.column{width:63%;text-align:left;}
+		#body div.right.column input.plot{}
+	</style>
+</head>
+<body>
+	<div id="document">
+	    <div id="header">
+	        <h1>Fast Farm Town Designer version 0.000001</h1>
+	    </div>
+	    <div id="body">
+            <form name="requestForm">
+	            <div class="left column">
+                    <ul>
+                        <li>
+                            <label>Select a user to work as</label>
+                            <select name="userID">
+                                <option value="">choose...</option>
+                                <option selected="selected" value="1182377425">Lance</option>
+                                <option value="1018869859">Niki</option>
+                            </select>
+                            <button id="userInfoButton">Load User Info</button>
+                        </li>
+                        <li>
+                            <label>Select a user's who's farm your working on</label>
+                            <select name="farmUserID">
+                                <option value="">choose...</option>
+                                <option selected="selected" value="1182377425">Lance</option>
+                                <option value="1018869859">Niki</option>
+                            </select>
+                        </li>
+                        <li>
+                            <label>What do you want to do?</label>
+                            <select name="doThis">
+                                <option value="purchase">Purchase (plow/plant)</option>
+                                <option value="harvest">Harvest</option>
+                                <option selected="selected" value="bulldoze">Bull Doze</option>
+                                <!--<option value="harvest">Harvest</option>-->
+                            </select>
+                        </li>
+                        <li>
+                            <label>What item are you working on?</label>
+                            <select name="item">
+                                <option value="">nothing...</option>
+                                <optgroup label="Plants">
+                                    <option value="GP">Grapes</option>	                    
+                                    <option value="TO">Tomatoes</option>	                    
+                                    <option value="RI">Rice</option>	                    
+                                    <option value="CO">Corn</option>	                    
+                                    <option value="PO">Potato</option>	                    
+                                    <option value="SB">Strawberry</option>	                    
+                                    <option value="WH">Wheat</option>	                    
+                                    <option value="SF">Sun Flower</option>
+                                    <option value="CF">Coffee</option>
+                                    <option value="ZQ">Raspberry</option>
+                                    <option value="WA">Watermellon</option>
+                                    <option value="CB">Cabbage</option>
+                                    <option value="ZE">Cotton</option>
+                                </optgroup>
+                                <optgroup label="Trees">
+                                    <option value="">Cherry</option>
+                                </optgroup>
+                                <optgroup label="Other (use for bull dozing)">
+                                    <option selected="selected" value="HF">Harvested Field</option>
+                                    <option value="PF">Plowed Field</option>
+                                <optgroup>
+                            </select>
+                        </li>
+                        <li>
+                            <label>Offset X <input type="text" value="0" name="offsetX"/></label>
+                        </li>
+                        <li>
+                            <label>Offset Y <input type="text" value="0" name="offsetY"/></label>
+                        </li>
+                    </ul>
+                    <input type="submit" name="submit" id="start_farming" value="Start Farming"/>
+                    <fieldset>
+                        <legend>User Info</legend>
+                        <div id="userInfo"></div>
+                    </fieldset>
+	            </div>
+	            <div class="right column">
+	                <fieldset>
+	                    <legend>Options</legend>
+	                    <label>Select...<label>
+	                    <label><input type="radio" name="select_type" value="everything"/>Everything</label>
+	                    <label><input type="radio" name="select_type" value="pluses"/>Pluses</label>
+	                    <label><input type="radio" name="select_type" value="columns"/>Columns</label>
+	                    <label><input type="radio" name="select_type" value="rows"/>Rows</label>
+	                    <label><input type="radio" name="select_type" value="nothing"/>Nothing</label>
+	                    <label><input type="radio" name="select_type" value="singlePlot"/>Single Plot</label>
+	                </fieldset>
+	                <fieldset class="your-farm">
+	                    <legend>Your Farm's Plots</legend>
+	                </fieldset>
+	                <script type="text/javascript">
+	                    var rightColumn = $('#body div.right.column fieldset.your-farm');
+	                    for(var y=0; y<=farmDimensionY-1; y++){
+    	                    for(var x=0; x<=farmDimensionX-1; x++){
+    	                        elem = $('<input type="checkbox" />')
+    	                            .attr('name', 'plot['+x+']['+y+']')
+    	                            .addClass('plot')
+    	                            .data('column', x)
+    	                            .data('row', y);
+    	                        rightColumn.append(elem);
+    	                    }
+
+    	                    rightColumn.append('<br style="clear:left"/>');
+	                    }
+	                </script>
+	            </div>
+    	        <div style="clear:both;"></div>
+            </form>
+	    </div>
+	    <div id="footer"><a href="mailto:caraccioli@cox.net">Lance Caraccioli</a></div>    
+	</div>
+</body>
+</html>

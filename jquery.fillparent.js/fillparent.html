@@ -1,0 +1,55 @@
+<html>
+<head>
+	<script type="text/javascript" src="jquery-1.2.6.min.js"></script>
+	<!--<script type="text/javascript" src="jquery-1.3.2.min.js"></script>-->
+	<script type="text/javascript" src="jquery.dimensions.min.js"></script>
+	<script type="text/javascript" src="jquery.fillparent.js"></script>
+	<script type="text/javascript">
+		$(window).load(function(){
+			$('.right-column').fillparent();
+		});
+	</script>
+	<style type="text/css">
+		body{
+			background-color:#000;
+			color:#FFF;
+		}
+		.parent{
+			margin:0px auto;
+			width:800px;
+			padding:20px;
+			background-color:#777;
+			overflow:hidden;
+		}
+		* html .parent{
+			overflow:visible;
+			position:relative;
+			height:1px;
+		}
+		.left-column{
+			float:left;
+			width:200px;
+			padding:10px;
+			background-color:#B33;
+		}
+		.right-column{
+			float:left;
+			width:560px;
+			padding:10px;
+			background-color:#373;
+		}
+	</style>
+</head>
+<body>
+	<div class="parent">
+		<div class="left-column">
+			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+		</div>
+		<div class="right-column">
+			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+		</div>
+	</div>
+</body>
+</html>
